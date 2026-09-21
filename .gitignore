@@ -9,5 +9,8 @@ venv/
 *.egg-info/
 .mypy_cache/
 
+# 后台服务日志
+logs/
+
 # macOS
 .DS_Store

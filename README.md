@@ -22,7 +22,23 @@ macOS 出于安全限制,监听全局快捷键和模拟键盘输入都需要授�
 
 打开 **系统设置 → 隐私与安全性 → 辅助功能**,把运行本程序的终端 App(Terminal 或 iTerm)加入并打开开关。改完最好重启一下终端。
 
-## 一键启动(推荐)
+## 后台运行 + 开机自启
+
+想让它在后台常驻、开机自动启动(基于 macOS LaunchAgent):
+
+```bash
+./install-service.sh     # 安装并立即启动,登录时自动拉起,崩溃自动重启
+./restart-service.sh     # 改了 config.yaml 或刚授权后,重启服务生效
+./uninstall-service.sh   # 卸载,取消开机自启
+```
+
+日志在 `logs/autokey.out.log` 和 `logs/autokey.err.log`。
+
+> ⚠️ **后台模式的授权和手动模式不同**:手动 `./start.sh` 是给"终端 App"授权;后台服务不挂在终端下,需要给 **Python 解释器本身**授权,否则监听不到快捷键(日志会出现 `This process is not trusted!`)。
+>
+> 打开「系统设置 → 隐私与安全性 → 辅助功能」,点 `+`,按 `Cmd+Shift+G` 输入解释器路径(`install-service.sh` 运行后会打印,通常是 `<项目目录>/.venv/bin/python3` 指向的真实文件),添加并打开开关,然后 `./restart-service.sh`。
+
+## 一键启动(前台,便于调试)
 
 ```bash
 ./start.sh
