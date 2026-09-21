@@ -15,12 +15,14 @@
 ```bash
 ./start.sh                       # 前台启动(首次会自动建虚拟环境+装依赖+生成配置)
 ./install-service.sh             # 装成后台服务,开机自启
-./restart-service.sh             # 改了 config.yaml / 刚授权后,重启服务
+./restart-service.sh             # 重启服务(一般只在刚授权后用;改 config.yaml 无需重启)
 ./uninstall-service.sh           # 卸载后台服务
 .venv/bin/python -m autokey list # 查看当前配置解析出的所有快捷键
 launchctl list | grep autokey    # 看后台服务是否在跑
 cat logs/autokey.err.log         # 看后台服务报错(权限问题会显示在这)
 ```
+
+> 改快捷键/密码:直接编辑 `config.yaml` 保存即可,约 1 秒自动生效(热加载),**不用重启**。详见下方「配置热加载」。
 
 ## 环境要求
 
