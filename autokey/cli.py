@@ -39,6 +39,13 @@ def _cmd_list(args: argparse.Namespace) -> int:
     for hk in config["hotkeys"]:
         name = hk.get("name") or hk["combo"]
         print(f"  {hk['combo']:<24} → {name}({len(hk['actions'])} 个动作)")
+
+    menu = config.get("menu")
+    if menu:
+        title = menu.get("title") or "选择要输入的内容"
+        print(f"\n菜单({menu['combo']} 唤出,标题「{title}」),共 {len(menu['items'])} 项:")
+        for item in menu["items"]:
+            print(f"  · {item['name']}({len(item['actions'])} 个动作)")
     return 0
 
 

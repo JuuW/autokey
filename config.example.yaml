@@ -24,6 +24,23 @@ hotkeys:
     actions:
       - type: "myusername@corp.com"
 
+# 弹出菜单(可选):快捷键太多记不住时,用一个快捷键弹出列表来选
+# 按下 combo → 弹出原生列表 → 点/选一项 → 自动执行该项的 actions。
+# hotkeys 和 menu 至少要有一个;两者可并存。
+menu:
+  combo: "<ctrl>+p"              # 唤出菜单的快捷键
+  title: "选择要输入的内容"        # 可选,弹窗提示文字
+  items:
+    - name: "公司邮箱登录"          # 列表里显示的文字(必填、需唯一)
+      actions:                    # 与 hotkey 的 actions 语义完全相同
+        - type: "myusername@corp.com"
+        - key: "tab"
+        - type: "MyS3cretPass"
+        - key: "enter"
+    - name: "只填邮箱"
+      actions:
+        - type: "myusername@corp.com"
+
 # combo 语法:
 #   修饰键写成 <ctrl> <alt>(即 Option) <cmd> <shift>,普通键直接写字母/数字。
 #   例:"<ctrl>+<shift>+p"、"<cmd>+<alt>+1"

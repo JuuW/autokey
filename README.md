@@ -110,6 +110,32 @@ hotkeys:
   - `type: "文本"` — 逐字符输入。
   - `key: "键名"` — 按一个特殊键。支持:`tab enter esc space backspace delete up down left right home end page_up page_down f1`–`f12`。
 
+### 弹出菜单(推荐:快捷键太多记不住时)
+
+如果要自动输入的种类很多,一个个记快捷键太累。可以用一个「菜单快捷键」弹出列表来选:按下后弹出 macOS 原生列表,点/方向键选一项 → 自动执行该项的动作。
+
+```yaml
+menu:
+  combo: "<ctrl>+p"              # 唤出菜单的快捷键
+  title: "选择要输入的内容"        # 可选,弹窗提示文字
+  items:
+    - name: "公司邮箱登录"          # 列表里显示的文字(必填、需唯一)
+      actions:                    # 与 hotkey 的 actions 语义完全相同
+        - type: "myusername@corp.com"
+        - key: "tab"
+        - type: "MyS3cretPass"
+        - key: "enter"
+    - name: "只填邮箱"
+      actions:
+        - type: "myusername@corp.com"
+```
+
+- `hotkeys` 和 `menu` **至少要有一个**,两者可并存(既能直接按专用快捷键,也能按菜单键选)。
+- `items` 里每项的 `name` 必须唯一(选中后靠它回查动作);`actions` 格式和上面完全一样。
+- **焦点行为**:弹窗会短暂抢焦点,选完后程序会等一下让焦点回到你原来的输入框再输入。所以用法是——**先把光标放进目标 App 的输入框、切到该 App,再按菜单键**。若在弹出菜单的同一个终端里测试,焦点可能回不去(属正常限制)。
+- 取消菜单(按 Esc 或点取消)则什么都不输入。
+- 菜单同样支持热加载:改完 `items` 保存约 1 秒生效,无需重启。
+
 ### 配置热加载
 
 程序运行时会每秒检查一次 `config.yaml`,**改完保存约 1 秒内自动生效,无需重启**(前台 `run` 和后台服务都一样)。若新配置有格式错误,会保留当前配置继续运行,并在日志/终端打印告警——不会中断服务。
@@ -129,6 +155,7 @@ autokey/
 │   ├── cli.py          # 命令行:run / init-config / list
 │   ├── config.py       # 加载+校验 config.yaml
 │   ├── actions.py      # 把动作翻译成按键(KEY_MAP 定义支持的特殊键)
+│   ├── menu.py         # 弹出 macOS 原生列表菜单(osascript)
 │   └── runner.py       # GlobalHotKeys 监听循环 + 触发执行
 ├── config.example.yaml # 配置示例(占位密码,可提交)
 ├── config.yaml         # 真实配置(含密码,gitignore,不提交)

@@ -34,14 +34,20 @@ def load_config(path: str) -> dict:
 
     settings = {**DEFAULT_SETTINGS, **(raw.get("settings") or {})}
 
-    hotkeys = raw.get("hotkeys")
-    if not isinstance(hotkeys, list) or not hotkeys:
-        raise ConfigError("配置里缺少 `hotkeys` 列表,或列表为空,至少需要一组快捷键。")
-
+    hotkeys = raw.get("hotkeys") or []
+    if not isinstance(hotkeys, list):
+        raise ConfigError("`hotkeys` 必须是一个列表。")
     for i, hk in enumerate(hotkeys):
         _validate_hotkey(hk, i)
 
-    return {"settings": settings, "hotkeys": hotkeys}
+    menu = raw.get("menu")
+    if menu is not None:
+        _validate_menu(menu)
+
+    if not hotkeys and menu is None:
+        raise ConfigError("配置里 `hotkeys` 和 `menu` 都为空,至少需要其中一个作为触发入口。")
+
+    return {"settings": settings, "hotkeys": hotkeys, "menu": menu}
 
 
 def _validate_hotkey(hk: object, index: int) -> None:
@@ -60,6 +66,38 @@ def _validate_hotkey(hk: object, index: int) -> None:
 
     for j, action in enumerate(actions):
         _validate_action(action, hk.get("name") or combo, j)
+
+
+def _validate_menu(menu: object) -> None:
+    if not isinstance(menu, dict):
+        raise ConfigError("`menu` 格式不对,应是一个对象(含 combo 和 items)。")
+
+    combo = menu.get("combo")
+    if not combo or not isinstance(combo, str):
+        raise ConfigError("`menu` 缺少 `combo`(唤出菜单的组合键字符串)。")
+
+    items = menu.get("items")
+    if not isinstance(items, list) or not items:
+        raise ConfigError("`menu` 的 `items` 缺失或为空,至少需要一个菜单项。")
+
+    seen_names = set()
+    for i, item in enumerate(items):
+        where = f"menu 第 {i + 1} 个菜单项"
+        if not isinstance(item, dict):
+            raise ConfigError(f"{where} 格式不对,应是一个对象。")
+
+        name = item.get("name")
+        if not name or not isinstance(name, str):
+            raise ConfigError(f"{where} 缺少 `name`(菜单里显示的文字)。")
+        if name in seen_names:
+            raise ConfigError(f"菜单项名称「{name}」重复,菜单里每个 `name` 必须唯一。")
+        seen_names.add(name)
+
+        actions = item.get("actions")
+        if not isinstance(actions, list) or not actions:
+            raise ConfigError(f"菜单项「{name}」的 `actions` 缺失或为空。")
+        for j, action in enumerate(actions):
+            _validate_action(action, name, j)
 
 
 def _validate_action(action: object, hotkey_name: str, index: int) -> None:

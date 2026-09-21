@@ -10,6 +10,7 @@ from pynput.keyboard import Controller
 
 from .actions import ActionError, execute_actions
 from .config import ConfigError, load_config
+from .menu import MenuError, choose_from_menu
 
 # 每隔多少秒检查一次配置文件是否被修改
 _POLL_INTERVAL = 1.0
@@ -42,12 +43,55 @@ def build_hotkey_map(config: dict, controller: Controller) -> dict:
 
         mapping[combo] = make_callback()
 
+    menu = config.get("menu")
+    if menu:
+        mapping[menu["combo"]] = _make_menu_callback(
+            menu, controller, start_delay, type_interval
+        )
+
     return mapping
+
+
+def _make_menu_callback(
+    menu: dict, controller: Controller, start_delay: float, type_interval: float
+):
+    title = menu.get("title") or "选择要输入的内容"
+    items = menu["items"]
+    # name → actions,选中后按 name 回查动作
+    actions_by_name = {item["name"]: item["actions"] for item in items}
+    item_names = [item["name"] for item in items]
+
+    def callback():
+        time.sleep(start_delay)  # 让唤出菜单的修饰键先松开
+        try:
+            chosen = choose_from_menu(title, item_names)
+        except MenuError as e:
+            print(f"[告警] 弹出菜单失败:{e}")
+            return
+        if chosen is None:  # 用户取消,什么都不输入
+            return
+        actions = actions_by_name.get(chosen)
+        if actions is None:  # 理论上不会发生
+            print(f"[告警] 菜单选中项「{chosen}」找不到对应动作。")
+            return
+        # 再等一下,让弹窗关闭、焦点回到原来的输入窗口
+        time.sleep(start_delay)
+        try:
+            execute_actions(controller, actions, type_interval)
+        except ActionError as e:
+            print(f"[告警] 执行菜单项「{chosen}」时出错:{e}")
+        except Exception as e:  # noqa: BLE001 - 单条出错不应让监听崩溃
+            print(f"[告警] 执行菜单项「{chosen}」时发生意外错误:{e}")
+
+    return callback
 
 
 def _print_hotkeys(config: dict) -> None:
     for hk in config["hotkeys"]:
         print(f"  {hk['combo']:<24} → {hk.get('name') or hk['combo']}")
+    menu = config.get("menu")
+    if menu:
+        print(f"  {menu['combo']:<24} → 弹出菜单({len(menu['items'])} 项)")
 
 
 def _mtime(path: str) -> float:
