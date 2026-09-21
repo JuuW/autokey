@@ -1,0 +1,36 @@
+# AutoKey 配置示例
+# 复制为 config.yaml 后填入你自己的信息:
+#   python -m autokey init-config
+#
+# ⚠️ config.yaml 会包含明文密码,已被 .gitignore 忽略,切勿分享或提交。
+
+# 全局设置(可选,缺省会用下面这些默认值)
+settings:
+  type_interval: 0.02   # 每个字符之间的间隔秒数,防止目标程序漏字符
+  start_delay: 0.15     # 触发后到开始输入的延迟,让快捷键的按键先释放
+
+# 快捷键 → 动作序列
+hotkeys:
+  - name: "登录公司系统"
+    combo: "<ctrl>+l"            # 组合键,pynput 语法
+    actions:
+      - type: "myusername@corp.com"   # 输入一段文本
+      - key: "tab"                    # 按一个特殊键
+      - type: "MyS3cretPass"          # 密码(明文,谨慎保管)
+      - key: "enter"
+
+  - name: "只填邮箱"
+    combo: "<ctrl>+<alt>+e"
+    actions:
+      - type: "myusername@corp.com"
+
+# combo 语法:
+#   修饰键写成 <ctrl> <alt>(即 Option) <cmd> <shift>,普通键直接写字母/数字。
+#   例:"<ctrl>+<shift>+p"、"<cmd>+<alt>+1"
+#
+# action 每一项只能是下面二者之一:
+#   type: "文本"    逐字符输入
+#   key:  "键名"    按一个特殊键,支持:
+#     tab enter esc space backspace delete
+#     up down left right home end page_up page_down
+#     f1 f2 ... f12
