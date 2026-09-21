@@ -46,7 +46,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     from .runner import run  # 延迟导入,避免 list/init 也依赖 pynput
 
     config = load_config(args.config)
-    run(config)
+    run(config, args.config)
     return 0
 
 

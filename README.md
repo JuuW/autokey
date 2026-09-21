@@ -42,7 +42,7 @@ macOS 出于安全限制,监听全局快捷键和模拟键盘输入都需要授�
 
 ```bash
 ./install-service.sh     # 安装并立即启动,登录时自动拉起,崩溃自动重启
-./restart-service.sh     # 改了 config.yaml 或刚授权后,重启服务生效
+./restart-service.sh     # 一般只在刚授权后用;改 config.yaml 无需重启(见下)
 ./uninstall-service.sh   # 卸载,取消开机自启
 ```
 
@@ -107,6 +107,10 @@ hotkeys:
 - **actions** 里每一项二选一:
   - `type: "文本"` — 逐字符输入。
   - `key: "键名"` — 按一个特殊键。支持:`tab enter esc space backspace delete up down left right home end page_up page_down f1`–`f12`。
+
+### 配置热加载
+
+程序运行时会每秒检查一次 `config.yaml`,**改完保存约 1 秒内自动生效,无需重启**(前台 `run` 和后台服务都一样)。若新配置有格式错误,会保留当前配置继续运行,并在日志/终端打印告警——不会中断服务。
 
 ## 安全提示
 
