@@ -14,7 +14,7 @@ hotkeys:
   - name: "登录公司系统"
     combo: "<ctrl>+l"            # 组合键,pynput 语法
     actions:
-      - type: "myusername@corp.com"   # 输入一段文本
+      - type: "myusername@corp.co3333m"   # 输入一段文本
       - key: "tab"                    # 按一个特殊键
       - type: "MyS3cretPass"          # 密码(明文,谨慎保管)
       - key: "enter"
