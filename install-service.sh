@@ -40,6 +40,11 @@ cat > "$PLIST_DST" <<PLIST
     </array>
     <key>WorkingDirectory</key>
     <string>$PROJECT_DIR</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>

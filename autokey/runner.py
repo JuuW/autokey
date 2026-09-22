@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import queue
 import time
 
 from pynput import keyboard
@@ -16,8 +17,14 @@ from .menu import MenuError, choose_from_menu
 _POLL_INTERVAL = 1.0
 
 
-def build_hotkey_map(config: dict, controller: Controller) -> dict:
-    """把每组 hotkey 的 combo 映射到触发回调。"""
+def build_hotkey_map(
+    config: dict, controller: Controller, menu_queue: "queue.Queue"
+) -> dict:
+    """把每组 hotkey 的 combo 映射到触发回调。
+
+    menu_queue 用于把“弹菜单”请求从 pynput 监听线程投递到主线程执行:NSMenu
+    必须在主线程弹出,若在监听线程直接弹会死锁并卡住键盘。
+    """
     settings = config["settings"]
     start_delay = settings["start_delay"]
     type_interval = settings["type_interval"]
@@ -45,45 +52,54 @@ def build_hotkey_map(config: dict, controller: Controller) -> dict:
 
     menu = config.get("menu")
     if menu:
-        mapping[menu["combo"]] = _make_menu_callback(
-            menu, controller, start_delay, type_interval
-        )
+        mapping[menu["combo"]] = _make_menu_callback(menu, menu_queue)
 
     return mapping
 
 
-def _make_menu_callback(
+def _make_menu_callback(menu: dict, menu_queue: "queue.Queue"):
+    """快捷键回调:仅把菜单请求投递到主线程,立即返回,绝不在监听线程弹菜单。
+
+    NSMenu 的事件追踪必须在主线程,否则会死锁并把键盘一起卡住。所以这里只
+    put 一个请求(带上当前 menu 配置),真正的弹出与执行由主线程完成。
+    """
+
+    def callback():
+        menu_queue.put(menu)
+
+    return callback
+
+
+def _process_menu_request(
     menu: dict, controller: Controller, start_delay: float, type_interval: float
-):
+) -> None:
+    """在主线程弹出菜单并执行选中项的动作。"""
     title = menu.get("title") or "选择要输入的内容"
     items = menu["items"]
-    # name → actions,选中后按 name 回查动作
     actions_by_name = {item["name"]: item["actions"] for item in items}
     item_names = [item["name"] for item in items]
 
-    def callback():
-        time.sleep(start_delay)  # 让唤出菜单的修饰键先松开
-        try:
-            chosen = choose_from_menu(title, item_names)
-        except MenuError as e:
-            print(f"[告警] 弹出菜单失败:{e}")
-            return
-        if chosen is None:  # 用户取消,什么都不输入
-            return
-        actions = actions_by_name.get(chosen)
-        if actions is None:  # 理论上不会发生
-            print(f"[告警] 菜单选中项「{chosen}」找不到对应动作。")
-            return
-        # 再等一下,让弹窗关闭、焦点回到原来的输入窗口
-        time.sleep(start_delay)
-        try:
-            execute_actions(controller, actions, type_interval)
-        except ActionError as e:
-            print(f"[告警] 执行菜单项「{chosen}」时出错:{e}")
-        except Exception as e:  # noqa: BLE001 - 单条出错不应让监听崩溃
-            print(f"[告警] 执行菜单项「{chosen}」时发生意外错误:{e}")
-
-    return callback
+    # 让唤出菜单的修饰键先松开,再弹菜单
+    time.sleep(start_delay)
+    try:
+        chosen = choose_from_menu(title, item_names)
+    except MenuError as e:
+        print(f"[告警] 弹出菜单失败:{e}")
+        return
+    if chosen is None:  # 用户取消,什么都不输入
+        return
+    actions = actions_by_name.get(chosen)
+    if actions is None:  # 理论上不会发生
+        print(f"[告警] 菜单选中项「{chosen}」找不到对应动作。")
+        return
+    # 再等一下,让弹窗关闭、焦点回到原来的输入窗口
+    time.sleep(start_delay)
+    try:
+        execute_actions(controller, actions, type_interval)
+    except ActionError as e:
+        print(f"[告警] 执行菜单项「{chosen}」时出错:{e}")
+    except Exception as e:  # noqa: BLE001 - 单条出错不应让监听崩溃
+        print(f"[告警] 执行菜单项「{chosen}」时发生意外错误:{e}")
 
 
 def _print_hotkeys(config: dict) -> None:
@@ -108,6 +124,7 @@ def run(config: dict, config_path: str) -> None:
     重建监听器。新配置若解析失败,保留当前配置继续运行,只在日志中报错。
     """
     controller = Controller()
+    menu_queue: "queue.Queue" = queue.Queue()
 
     print("AutoKey 已启动,监听以下快捷键:")
     _print_hotkeys(config)
@@ -122,11 +139,23 @@ def run(config: dict, config_path: str) -> None:
 
     try:
         while True:
-            mapping = build_hotkey_map(config, controller)
+            settings = config["settings"]
+            start_delay = settings["start_delay"]
+            type_interval = settings["type_interval"]
+            mapping = build_hotkey_map(config, controller, menu_queue)
             # 每次用最新配置重建监听器;下面的内层循环负责监视文件变化
             with keyboard.GlobalHotKeys(mapping) as listener:
                 while listener.running:
-                    time.sleep(_POLL_INTERVAL)
+                    # 阻塞至多 _POLL_INTERVAL 秒等待菜单请求;NSMenu 必须在本
+                    # (主)线程弹出,监听线程只负责把请求投递过来。
+                    try:
+                        menu = menu_queue.get(timeout=_POLL_INTERVAL)
+                    except queue.Empty:
+                        pass
+                    else:
+                        _process_menu_request(
+                            menu, controller, start_delay, type_interval
+                        )
                     current = _mtime(config_path)
                     if current == last_mtime:
                         continue
