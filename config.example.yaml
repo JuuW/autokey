@@ -6,7 +6,7 @@
 
 # 全局设置(可选,缺省会用下面这些默认值)
 settings:
-  type_interval: 0.02   # 每个字符之间的间隔秒数,防止目标程序漏字符
+  type_interval: 0.1    # 剪贴板粘贴前后的等待秒数,太小可能粘贴失败或漏字
   start_delay: 0.15     # 触发后到开始输入的延迟,让快捷键的按键先释放
 
 # 快捷键 → 动作序列
@@ -28,7 +28,7 @@ hotkeys:
 # 按下 combo → 弹出原生列表 → 点/选一项 → 自动执行该项的 actions。
 # hotkeys 和 menu 至少要有一个;两者可并存。
 menu:
-  combo: "<ctrl>+p"              # 唤出菜单的快捷键
+  combo: "<ctrl>+menu"              # 唤出菜单的快捷键
   title: "选择要输入的内容"        # 可选,弹窗提示文字
   items:
     - name: "公司邮箱登录"          # 列表里显示的文字(必填、需唯一)
@@ -46,7 +46,7 @@ menu:
 #   例:"<ctrl>+<shift>+p"、"<cmd>+<alt>+1"
 #
 # action 每一项只能是下面二者之一:
-#   type: "文本"    逐字符输入
+#   type: "文本"    通过剪贴板粘贴(Cmd+V),不受输入法影响,支持中文
 #   key:  "键名"    按一个特殊键,支持:
 #     tab enter esc space backspace delete
 #     up down left right home end page_up page_down

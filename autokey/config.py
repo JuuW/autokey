@@ -7,7 +7,7 @@ import os
 import yaml
 
 DEFAULT_SETTINGS = {
-    "type_interval": 0.02,
+    "type_interval": 0.1,
     "start_delay": 0.15,
 }
 
