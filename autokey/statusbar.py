@@ -1,8 +1,8 @@
 """在 macOS 菜单栏(status bar)放一个图标,点它下拉出可执行的菜单项。
 
-基于 PyObjC 的 NSStatusItem。图标用系统 SF Symbol「keyboard」(macOS 11+),
-不可用时回退为文字「AK」。点击某菜单项时,通过构造时传入的 run_actions 回调
-执行该项对应的 actions——本模块不直接依赖 actions/pynput,只负责界面。
+基于 PyObjC 的 NSStatusItem。图标用系统 SF Symbol「wand.and.stars」(macOS
+11+),不可用时回退为文字「AK」。点击某菜单项时,通过构造时传入的 run_actions
+回调执行该项对应的 actions——本模块不直接依赖 actions/pynput,只负责界面。
 
 所有方法都必须在主线程调用(Cocoa 约束)。
 """
@@ -47,7 +47,7 @@ class StatusBarIcon:
     def _apply_icon(self) -> None:
         button = self._item.button()
         image = AppKit.NSImage.imageWithSystemSymbolName_accessibilityDescription_(
-            "keyboard", "AutoKey"
+            "wand.and.stars", "AutoKey"
         )
         if image is not None:  # macOS 11+ 才有 SF Symbol
             button.setImage_(image)
