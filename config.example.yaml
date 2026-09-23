@@ -37,9 +37,18 @@ menu:
         - key: "tab"
         - type: "MyS3cretPass"
         - key: "enter"
-    - name: "只填邮箱"
-      actions:
-        - type: "myusername@corp.com"
+    # 上面 6 行等价于下面这一行“紧凑写法”:
+    - "公司邮箱登录2 = myusername@corp.com → [tab] → MyS3cretPass → [enter]"
+    - "只填邮箱 = myusername@corp.com"
+
+# 紧凑写法(可选,与上面的多行写法可混用):
+#   把列表项直接写成一行字符串:"名称 = 动作1 → 动作2 → ..."
+#     · 第一个 = 左边是名称(menu 项)或组合键(hotkeys 项),右边是动作序列。
+#     · 动作之间用 → 分隔;[键名] 表示按特殊键,其余片段表示输入文本。
+#     · 文本片段前后空格会被去掉;名称/文本里请勿使用 = 和 →。
+#   hotkeys 也支持,此时 = 左边是组合键并兼作名称,例如:
+#     hotkeys:
+#       - "<ctrl>+l = myusername@corp.com → [tab] → MyS3cretPass → [enter]"
 
 # combo 语法:
 #   修饰键写成 <ctrl> <alt>(即 Option) <cmd> <shift>,普通键直接写字母/数字。
